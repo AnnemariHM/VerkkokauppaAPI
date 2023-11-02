@@ -4,10 +4,11 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
-public record Tuote(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
-public record Asiakas(int id, string name, string email, string address, string phonenumber);
 
+public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
+public record Asiakas(int id, string name, string email, string address, string phonenumber);
 public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
+
 
     internal class Databaselogics
     {
@@ -337,6 +338,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             connection.Close();
         }
 
+        // Returns named product's info
+        public Tuple<string, string, string, int, int, string, string> GetProductInfo(string productName)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            Tuple<string, string, string, int, int, string, string> tuple = new Tuple<string, string, string, int, int, string, string>("", "", "", 0, 0, "", "");
+            connection.Close();
+            return tuple;
+        }
+
         // Returns named product's id
         public int GetProductId(string productName)
         {
@@ -361,8 +372,11 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
         }
 
         // Returns a list of all the product names in database
-        public List<string> GetAllProductNames(SqliteConnection connection)
+        public List<string> GetAllProductNames()
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<string> names = new List<string>();
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -373,12 +387,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 names.Add(result.GetString(0));
             }
+            connection.Close();
             return names;
         }
 
         // Returns named product's category
-        public string GetProductCategory(SqliteConnection connection, string productName)
+        public string GetProductCategory(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string ctgory = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -391,12 +409,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 ctgory = result.GetString(0);
             }
+            connection.Close();
             return ctgory;
         }
 
         // Returns named product's second category
-        public string GetProductCategory2(SqliteConnection connection, string productName)
+        public string GetProductCategory2(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string ctgory = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -409,12 +431,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 ctgory = result.GetString(0);
             }
+            connection.Close();
             return ctgory;        
         }
 
         // Returns named product's price
-        public int GetProductPrice(SqliteConnection connection, string productName)
+        public int GetProductPrice(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             int price = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -427,12 +453,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 price = result.GetInt32(0);
             }
+            connection.Close();
             return price;
         }
 
         // Returns named product's amount
-        public int GetProductAmount(SqliteConnection connection, string productName)
+        public int GetProductAmount(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             int amount = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -445,12 +475,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 amount = result.GetInt32(0);
             }
+            connection.Close();
             return amount;
         }
 
         // Returns named product's img
-        public string GetProductImg(SqliteConnection connection, string productName)
+        public string GetProductImg(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string img = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -463,12 +497,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 img = result.GetString(0);
             }
+            connection.Close();
             return img;
         }
 
         // Returns named product's description
-        public string GetProductDescription(SqliteConnection connection, string productName)
+        public string GetProductDescription(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string description = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -481,12 +519,16 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 description = result.GetString(0);
             }
+            connection.Close();
             return description;
         }
 
         // Updates the product's name to the database
-        public void UpdateProductName(SqliteConnection connection, string productName, string newName)
+        public void UpdateProductName(string productName, string newName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText = 
             @"UPDATE Tuotteet
@@ -495,11 +537,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newName", newName);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's category to the database
-        public void UpdateProductCategory(SqliteConnection connection, string productName, string newCategory)
+        public void UpdateProductCategory(string productName, string newCategory)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -508,11 +554,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newCategory", newCategory);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's second category to the database
-        public void UpdateProductCategory2(SqliteConnection connection, string productName, string newCategory)
+        public void UpdateProductCategory2(string productName, string newCategory)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -521,11 +571,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newCategory", newCategory);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's price to the database
-        public void UpdateProductPrice(SqliteConnection connection, string productName, int newPrice)
+        public void UpdateProductPrice(string productName, int newPrice)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -534,11 +588,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newPrice", newPrice);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's amount to the database
-        public void UpdateProductAmount(SqliteConnection connection, string productName, int newAmount)
+        public void UpdateProductAmount(string productName, int newAmount)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -547,11 +605,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newAmount", newAmount);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's img to the database
-        public void UpdateProductImg(SqliteConnection connection, string productName, string newImg)
+        public void UpdateProductImg(string productName, string newImg)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -560,11 +622,15 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newImg", newImg);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's description to the database
-        public void UpdateProductDescription(SqliteConnection connection, string productName, string newDescription)
+        public void UpdateProductDescription(string productName, string newDescription)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -573,22 +639,30 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             updateCmd.Parameters.AddWithValue("$newDescription", newDescription);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Deletes a product from the table
-        public void DeleteProduct(SqliteConnection connection, string name)
+        public void DeleteProduct(string name)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var delCmd = connection.CreateCommand();
             delCmd.CommandText = 
             @"DELETE FROM Tuotteet
             WHERE nimi = $nimi";
             delCmd.Parameters.AddWithValue("$nimi", name);
             delCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Prints all products to console (for testing purposes)
-        public void PrintAllProducts(SqliteConnection connection)
+        public void PrintAllProducts()
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             Console.WriteLine("Tuotteet:");
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = "SELECT * FROM Tuotteet";
@@ -598,6 +672,7 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             {
                 Console.WriteLine($"{product["id"]} {product["nimi"]} {product["kategoria"]} {product["kategoria_kaksi"]} {product["hinta"]} {product["kappalemaara"]} {product["kuva"]} {product["kuvaus"]}");
             }
+            connection.Close();
         }
         #endregion
 
