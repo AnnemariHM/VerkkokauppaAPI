@@ -4,7 +4,7 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
-
+public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot);
 public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
 public record Asiakas(int id, string name, string email, string address, string phonenumber);
 public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
@@ -162,7 +162,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
         }
 
         // Gets (select) numeric product review by product name
-        public List<int> GetNumericReview(string productName) //Tästä eteenpäin ei oo vielä
+        public List<int> GetNumericReview(string productName)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -216,12 +216,17 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
         }
 
         // Deletes the review searched by string
-        public void DeleteReview(SqliteConnection connection, string toBeDeleted)
+        public void DeleteReview(string toBeDeleted)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var delCmd = connection.CreateCommand();
             delCmd.CommandText = @"DELETE FROM Arvostelut WHERE arvostelu = $arvostelu";
             delCmd.Parameters.AddWithValue("$arvostelu", toBeDeleted);
             delCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
         #endregion
       
@@ -344,13 +349,34 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
         }
 
         // Returns named product's info
-        public Tuple<string, string, string, int, int, string, string> GetProductInfo(string productName)
+        public Product GetProductInfo(string productName)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-            Tuple<string, string, string, int, int, string, string> tuple = new Tuple<string, string, string, int, int, string, string>("", "", "", 0, 0, "", "");
+            Product product = null;
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText =
+            @"SELECT *
+            FROM Tuotteet
+            WHERE nimi = $nimi";
+            selectCmd.Parameters.AddWithValue("$nimi", productName);
+            var result = selectCmd.ExecuteReader();
+            if (result.Read())
+            {
+                // Create a new Product record and set its values from the database columns
+                product = new Product(
+                    result.GetInt32(0),      // id
+                    result.GetString(1),     // name
+                    result.GetString(2),     // productCtgory
+                    result.GetString(3),     // productCtgory2
+                    result.GetInt32(4),      // price
+                    result.GetInt32(5),      // amount
+                    result.GetString(6),     // img
+                    result.GetString(7)      // description
+                );
+            }
             connection.Close();
-            return tuple;
+            return product;
         }
 
         // Returns named product's id
@@ -682,9 +708,12 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
         #endregion
 
         #region Purchase
-        // Lisää ostoksia TILAUKSET-tauluun
-        public void AddPurchase(SqliteConnection connection, int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot)
+        // Add purchase to TILAUKSET-table
+        public void AddPurchase(int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var insertCmd2 = connection.CreateCommand();
             insertCmd2.CommandText = @"INSERT INTO Tilaukset (
             asiakas_id, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot) 
@@ -696,12 +725,17 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             insertCmd2.Parameters.AddWithValue($"tilauksen_tila", tilauksen_tila);
             insertCmd2.Parameters.AddWithValue($"lisatiedot", lisatiedot);
             insertCmd2.ExecuteNonQuery();
+
+            connection.Close();
         }
-        // hae TILAUS tilaus_id:n perusteella (asiakasnimi, asiakasId, tilauspaiva)
-        public void FindPurchaseId(SqliteConnection connection, int findOstos_id)
+
+        // find purchase by purchase id (asiakasnimi, asiakasId, tilauspaiva)
+        public void FindPurchaseId(int findOstos_id)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
             // hae ostos_id:n perusteella
-            // tilauksen hinta tulee toisesta  ??
+            // tilauksen hinta tulee toisesta taulusta??
             var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
@@ -709,14 +743,40 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             selectPurchase.Parameters.AddWithValue("$findOstos_id", findOstos_id );
             var purchases = selectPurchase.ExecuteReader();
 
+           /* DICTIONARY TMS JOKU HYVÄ PRINTTI TÄHÄN, 
+           TÄMÄ VOIS OLLA PAREMPI
+           var tilaus = new Dictionary<int, Tuple<int, string, string, string, int, string, string>>();
+
             while(purchases.Read())
             {
-                Console.WriteLine($"TilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} | Tilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}");
-            }
+                var id = purchases.GetInt32(0);
+                var asiakas_id = purchases.GetInt32(1);
+                var nimi = purchases.GetString(2);
+                var tilauspaiva = purchases.GetString(3);
+                var toimitusosoite = purchases.GetString(4);
+                var tilauksen_hinta = purchases.GetInt32(5);
+                var tilauksen_tila = purchases.GetString(6);
+                var lisatiedot = purchases.GetString(7);
+
+                var item = Tuple.Create(asiakas_id, nimi, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot);
+                tilaus.Add(id, item);
+              //  tilaus.Add(id, asiakas_id, nimi, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot);
+            } */
+
+             while(purchases.Read())
+             {
+                 Console.WriteLine($"TilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} | Tilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}");
+             }
+
+            connection.Close();
         }
-        // select hae TILAUS asiakas-id perusteella
-        public void FindPurchaseCustomerId(SqliteConnection connection, int findTilaus_tilaajanId)
+
+        // SELECT Find purchase by customer id
+        public void FindPurchaseCustomerId(int findTilaus_tilaajanId)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             // tilauksen hinta tulee toisesta taulusta, SE PUUTTUU ??
             var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
@@ -729,43 +789,62 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             {
                 Console.WriteLine($"----------------------------\nTilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} \nTilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}\n----------------------------");
             }
+
+            connection.Close();
         }
-        // select hae TILAUS päivämäärän perusteella
-        public void FindTilaus_paivamaara(SqliteConnection connection, string findTilaus_paivamaara)
+        // select find purchase by order date
+        public void FindPurchase_bydate(string findPurchase_bydate)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var selectPurchaseD = connection.CreateCommand();
             selectPurchaseD.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
-            WHERE Tilaukset.tilauspaiva = $findTilaus_paivamaara";
-            selectPurchaseD.Parameters.AddWithValue("$findTilaus_paivamaara", findTilaus_paivamaara);
+            WHERE Tilaukset.tilauspaiva = $findPurchase_bydate";
+            selectPurchaseD.Parameters.AddWithValue("$findPurchase_bydate", findPurchase_bydate);
             var purchaseD = selectPurchaseD.ExecuteReader();
 
             while(purchaseD.Read())
             {
                 Console.WriteLine($"----------------------------\nTilausID: {purchaseD["id"]} | AsiakasID: {purchaseD["asiakas_id"]} | Asiakasnimi: {purchaseD["nimi"]} \nTilauspäivä: {purchaseD["tilauspaiva"]} | Toimitusosoite: {purchaseD["toimitusosoite"]} | Tilauksen hinta €: {purchaseD["tilauksen_hinta"]} | Tilauksen tila: {purchaseD["tilauksen_tila"]} | Lisätiedot: {purchaseD["lisatiedot"]}\n----------------------------");
             }
+
+            connection.Open();
         }
 
-        //
-        public void DeletePurchaseById (SqliteConnection connection, int delTilaus)
+        // DELETE purchase by purchase id
+        public void DeletePurchaseById (int delTilaus)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var deletePurchaseCmd = connection.CreateCommand();
             deletePurchaseCmd.CommandText = "DELETE FROM Tilaukset WHERE Tilaukset.id = $delTilaus";
             deletePurchaseCmd.Parameters.AddWithValue("$delTilaus", delTilaus);
             deletePurchaseCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
-        public void PrintAllPurchases(SqliteConnection connection)
+        //print all purchases
+
+        public void PrintAllPurchases()
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var printPurchases = connection.CreateCommand();
             printPurchases.CommandText = "SELECT * FROM Tilaukset LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id";
             var purchases = printPurchases.ExecuteReader();
             
-            // Tulosta tuotteet
+            // Print purchases
             while (purchases.Read())
             {
                 Console.WriteLine($"----------------------------\nTilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} \nTilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}\n");
             }
+
+            connection.Close();
         }
 
         #endregion

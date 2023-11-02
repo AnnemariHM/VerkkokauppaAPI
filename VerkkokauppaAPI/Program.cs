@@ -15,6 +15,7 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 
 #region ProductMapping
     app.MapPost("/addproduct", (Product product) => database.AddProduct(product.name, product.productCtgory, product.productCtgory2, product.price, product.amount, product.img, product.description));
+    app.MapGet("/getproductinfo/{name}", (string name) => database.GetProductInfo(name));
     app.MapGet("/getproductid/{name}", (string name) => database.GetProductId(name));
     app.MapGet("/getallproductnames", () => database.GetAllProductNames());
 #endregion
@@ -55,10 +56,33 @@ app.MapGet("/getorderline/{id}", (int id) => database.GetOrderLine(id));
 
 #region ReviewsMapping
 
+//Pitäiskö tehdä vielä metodi, että string ja numeric review palautuis samassa molemmat
 app.MapGet("/getreview/{name}", (string name) => database.GetReview(name));
+app.MapGet("/getnumericreview/{name}", (string name) => database.GetNumericReview(name));
+app.MapGet("/getcustomeridfromreview/{review}", (string review) => database.GetCustomerIdFromReview(review));
 
 app.MapPost("/addreview", (AddReview review) => database.AddReview(review.ProductId, review.CustomerId, review.Review, review.NumReview));
 
+app.MapDelete("/deletereview/{review}", (string review) => database.DeleteReview(review));
+
 #endregion
+
+// Sofian tilaukset - Purchases -mapit
+//AddPurchase
+app.MapPost("/addpurchase", (Tilaukset tilaus) => database.AddPurchase(tilaus.asiakas_id, tilaus.tilauspaiva, tilaus.toimitusosoite, tilaus.tilauksen_hinta, tilaus.tilauksen_tila, tilaus.lisatiedot));
+
+// FindPurchaseId
+app.MapGet("/findpurchaseid/{id}", (int id) => database.FindPurchaseId(id));
+
+// FindPurchaseCustomerId
+app.MapGet("/findpurchasecustomerid/{id}", (int customer_id) => database.FindPurchaseCustomerId(customer_id));
+
+// FindPurchase_bydate
+app.MapGet("/findpurchasebydate/{date}", (string date) => database.FindPurchase_bydate(date));
+
+// DeletePurchaseById
+
+// PrintAllPurchases
+app.MapGet("/printallpurchases", () => database.PrintAllPurchases());
 
 app.Run();
