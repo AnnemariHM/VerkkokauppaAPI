@@ -339,13 +339,34 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
         }
 
         // Returns named product's info
-        public Tuple<string, string, string, int, int, string, string> GetProductInfo(string productName)
+        public Product GetProductInfo(string productName)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-            Tuple<string, string, string, int, int, string, string> tuple = new Tuple<string, string, string, int, int, string, string>("", "", "", 0, 0, "", "");
+            Product product = null;
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText =
+            @"SELECT *
+            FROM Tuotteet
+            WHERE nimi = $nimi";
+            selectCmd.Parameters.AddWithValue("$nimi", productName);
+            var result = selectCmd.ExecuteReader();
+            if (result.Read())
+            {
+                // Create a new Product record and set its values from the database columns
+                product = new Product(
+                    result.GetInt32(0),      // id
+                    result.GetString(1),     // name
+                    result.GetString(2),     // productCtgory
+                    result.GetString(3),     // productCtgory2
+                    result.GetInt32(4),      // price
+                    result.GetInt32(5),      // amount
+                    result.GetString(6),     // img
+                    result.GetString(7)      // description
+                );
+            }
             connection.Close();
-            return tuple;
+            return product;
         }
 
         // Returns named product's id

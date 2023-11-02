@@ -15,6 +15,7 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 
 #region ProductMapping
     app.MapPost("/addproduct", (Product product) => database.AddProduct(product.name, product.productCtgory, product.productCtgory2, product.price, product.amount, product.img, product.description));
+    app.MapGet("/getproductinfo/{name}", (string name) => database.GetProductInfo(name));
     app.MapGet("/getproductid/{name}", (string name) => database.GetProductId(name));
     app.MapGet("/getallproductnames", () => database.GetAllProductNames());
 #endregion
