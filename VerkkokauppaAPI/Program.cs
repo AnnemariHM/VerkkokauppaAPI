@@ -26,9 +26,14 @@ app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) =>
 
 #region ReviewsMapping
 
+//Pitäiskö tehdä vielä metodi, että string ja numeric review palautuis samassa molemmat
 app.MapGet("/getreview/{name}", (string name) => database.GetReview(name));
+app.MapGet("/getnumericreview/{name}", (string name) => database.GetNumericReview(name));
+app.MapGet("/getcustomeridfromreview/{review}", (string review) => database.GetCustomerIdFromReview(review));
 
 app.MapPost("/addreview", (AddReview review) => database.AddReview(review.ProductId, review.CustomerId, review.Review, review.NumReview));
+
+app.MapDelete("/deletereview/{review}", (string review) => database.DeleteReview(review));
 
 #endregion
 

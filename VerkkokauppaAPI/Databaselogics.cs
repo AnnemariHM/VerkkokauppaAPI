@@ -162,7 +162,7 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
         }
 
         // Gets (select) numeric product review by product name
-        public List<int> GetNumericReview(string productName) //Tästä eteenpäin ei oo vielä
+        public List<int> GetNumericReview(string productName)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -216,12 +216,17 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
         }
 
         // Deletes the review searched by string
-        public void DeleteReview(SqliteConnection connection, string toBeDeleted)
+        public void DeleteReview(string toBeDeleted)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var delCmd = connection.CreateCommand();
             delCmd.CommandText = @"DELETE FROM Arvostelut WHERE arvostelu = $arvostelu";
             delCmd.Parameters.AddWithValue("$arvostelu", toBeDeleted);
             delCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
         #endregion
       
