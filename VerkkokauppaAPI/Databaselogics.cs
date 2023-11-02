@@ -283,12 +283,17 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
         }
 
         // Poistaa tablesta Asiakkaat asiakkaan tiedot emailin perusteella
-        public void DeleteCustomer(SqliteConnection connection, string email)
+        public void DeleteCustomer(string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var deleteCmd = connection.CreateCommand();
             deleteCmd.CommandText = @"DELETE FROM Asiakkaat WHERE email = $email";
             deleteCmd.Parameters.AddWithValue("$email", email);
             deleteCmd.ExecuteNonQuery();
+            
+            connection.Close();
         }
 
         // Printtaa consoleen tarjolla olevat sarakkeet haluamasta tablesta parametrillä tableName. En halunnut, että se näyttää "id" saraketta joten se skippaa ne!

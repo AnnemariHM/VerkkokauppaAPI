@@ -19,10 +19,20 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
     app.MapGet("/getallproductnames", () => database.GetAllProductNames());
 #endregion
 
-// Customer
+#region CustomerMapping
+// Add Customer - http://localhost:{PORT}/addcustomer - Body JSON: {"name":"Anssi Peltola","email": "anssipeltola@hotmail.com", "address": "Itsenäisyydenkatu 18", "phonenumber": "0400244925"}
 app.MapPost("/addcustomer", (Asiakas asiakas) => database.AddCustomer(asiakas.name, asiakas.email, asiakas.address, asiakas.phonenumber));
-app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); // http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
-//
+
+// Get Customer Info - http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
+app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); 
+
+// Update Customer Info - http://localhost:{PORT}/updatecustomer/nimi/Anssi%20Peltola/anssipeltola%40hotmail.com %20 = välilyönti %40 = @
+app.MapPut("/updatecustomer/{column}/{newInfo}/{email}", (string column, string newInfo, string email) => database.UpdateCustomer(column, newInfo, email));
+
+// Delete Customer - http://localhost:{PORT}/deletecustomer/anssipeltola%40hotmail.com
+app.MapDelete("/deletecustomer/{email}", (string email) => database.DeleteCustomer(email));
+
+#endregion
 
 #region ReviewsMapping
 
