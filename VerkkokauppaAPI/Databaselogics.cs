@@ -8,7 +8,7 @@ using Microsoft.VisualBasic;
 public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
 public record Asiakas(int id, string name, string email, string address, string phonenumber);
 public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
-
+public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hinta);
 
     internal class Databaselogics
     {
@@ -772,8 +772,11 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
 
         #region Tilausrivit
 
-        public void AddOrderLine(SqliteConnection connection, int tilaus_id, int tuote_id, int maara, int hinta)
+        public void AddOrderLine(int tilaus_id, int tuote_id, int maara, int hinta)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = 
                 @"INSERT INTO Tilausrivit (tilaus_id, tuote_id, maara, hinta)
@@ -783,14 +786,38 @@ public record AddReview(int Id, int ProductId, int CustomerId, string Review,int
             insertCmd.Parameters.AddWithValue("$maara", maara);
             insertCmd.Parameters.AddWithValue("$hinta", hinta);
             insertCmd.ExecuteNonQuery();
+
+            connection.Close(); 
         }
 
-        public void DeleteOrderLine(SqliteConnection connection, int deleteID)
+        public void DeleteOrderLine(int deleteID)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var deleteCmd = connection.CreateCommand();
             deleteCmd.CommandText = @"DELETE FROM Tilausrivit WHERE id = $deleteID";
             deleteCmd.Parameters.AddWithValue("$deleteID", deleteID);
             deleteCmd.ExecuteNonQuery();
+
+            connection.Close();
+        }
+
+        public DataTable GetOrderLine(int id)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = @"SELECT * FROM Tilausrivit WHERE id = $id";
+            selectCmd.Parameters.AddWithValue("$id", id);
+            var reader = selectCmd.ExecuteReader();
+            var dataTable = new DataTable();
+            dataTable.Load(reader);
+
+            connection.Close();
+            return dataTable;
+
         }
 
         #endregion
