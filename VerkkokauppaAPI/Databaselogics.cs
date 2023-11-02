@@ -7,6 +7,8 @@ using Microsoft.VisualBasic;
 public record Tuote(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
 public record Asiakas(int id, string name, string email, string address, string phonenumber);
 
+public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
+
     internal class Databaselogics
     {
         private static string _connectionString = "Data Source = verkkokauppa.db";
@@ -110,8 +112,11 @@ public record Asiakas(int id, string name, string email, string address, string 
 
         #region Reviews
         // Inserts new product review
-        public void AddReview(SqliteConnection connection, int productId, int customerId, string review,int numReview)
-        {
+        public void AddReview(int productId, int customerId, string review,int numReview)
+        { 
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = @"INSERT INTO Arvostelut (tuote_id, asiakas_id, arvostelu, numeerinen_arvio)
             VALUES ($tuote_id, $asiakas_id, $arvostelu, $numeerinen_arvio)";
@@ -120,11 +125,16 @@ public record Asiakas(int id, string name, string email, string address, string 
             insertCmd.Parameters.AddWithValue("$arvostelu", review);
             insertCmd.Parameters.AddWithValue("$numeerinen_arvio", numReview);
             insertCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
         // Gets (select) product review (text) by product name
-        public List<string> GetReview(SqliteConnection connection, string productName)
+        public List<string> GetReview(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List <string> returning = new List<string>();
             List<string> noReviews = new List<string>();
 
@@ -146,12 +156,16 @@ public record Asiakas(int id, string name, string email, string address, string 
                 return noReviews;
             }
 
+            connection.Close();
             return returning;
         }
 
         // Gets (select) numeric product review by product name
-        public List<int> GetNumericReview(SqliteConnection connection, string productName)
+        public List<int> GetNumericReview(string productName) //Tästä eteenpäin ei oo vielä
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<int> returning = new List<int>();
             List<int> noReviews = new List<int>();
 
@@ -173,12 +187,16 @@ public record Asiakas(int id, string name, string email, string address, string 
                 return noReviews;
             }
 
+            connection.Close();
             return returning;
         }
 
         //Gets customer's id searched by review
-        public List<int> GetCustomerIdFromReview(SqliteConnection connection, string review)
+        public List<int> GetCustomerIdFromReview(string review)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<int> customerId = new List<int>();
 
             var selectCmd = connection.CreateCommand();
@@ -192,6 +210,7 @@ public record Asiakas(int id, string name, string email, string address, string 
                 customerId.Add(result.GetInt32(0));
             }
 
+            connection.Close();
             return customerId;
         }
 

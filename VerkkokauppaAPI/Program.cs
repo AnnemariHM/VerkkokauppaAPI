@@ -23,4 +23,12 @@ app.MapGet("/getproductid/{name}", (string name) => database.GetProductId(name))
 
 app.MapPost("/addproduct", (Tuote tuote) => database.AddProduct(tuote.name, tuote.productCtgory, tuote.productCtgory2, tuote.price, tuote.amount, tuote.img, tuote.description));
 
+#region ReviewsMapping
+
+app.MapGet("/getreview/{name}", (string name) => database.GetReview(name));
+
+app.MapPost("/addreview", (AddReview review) => database.AddReview(review.ProductId, review.CustomerId, review.Review, review.NumReview));
+
+#endregion
+
 app.Run();
