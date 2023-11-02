@@ -4,7 +4,10 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
+
 public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
+public record Asiakas(int id, string name, string email, string address, string phonenumber);
+
 
     internal class Databaselogics
     {
@@ -206,8 +209,11 @@ public record Product(int id, string name, string productCtgory, string productC
       
         #region Customers
         // Lisää asiakas tauluun Asiakkaat
-        public void AddCustomer(SqliteConnection connection, string name, string email, string address, string phonenumber)
+        public void AddCustomer(string name, string email, string address, string phonenumber)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+        
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = 
             @"INSERT INTO Asiakkaat (nimi, email, osoite, puhelinnumero)
@@ -217,22 +223,31 @@ public record Product(int id, string name, string productCtgory, string productC
             insertCmd.Parameters.AddWithValue("$address", address);
             insertCmd.Parameters.AddWithValue("$phonenumber", phonenumber);
             insertCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // UPDATE asiakkaan tietoja taulusta Asiakkaat. Valitse parametrillä email kenen tietoja päivitetään, colum mitä tietoja ja newInfo uusi tieto.
-        public void UpdateCustomer(SqliteConnection connection, string column, string newInfo, string email)
+        public void UpdateCustomer(string column, string newInfo, string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             $"UPDATE Asiakkaat SET {column} = $newInfo WHERE email = $email";
             updateCmd.Parameters.AddWithValue("$newInfo", newInfo);
             updateCmd.Parameters.AddWithValue("$email", email);
             updateCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
         // Hakee tablesta Asiakkaat columnin tiedot siltä, missä email mätsää.
-        public string GetCustomerInfo(SqliteConnection connection, string column, string email)
+        public string GetCustomerInfo(string column, string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string returnResult = "";
 
             var getCmd = connection.CreateCommand();
@@ -244,7 +259,8 @@ public record Product(int id, string name, string productCtgory, string productC
             {
                 returnResult = result.GetString(0);
             }
-
+            
+            connection.Close();
             return returnResult;
         }
 
@@ -758,29 +774,29 @@ public record Product(int id, string name, string productCtgory, string productC
         
         #region Logins
         // Adds log in info to the table
-        public void AddLogin(SqliteConnection connection, string customerEmail, string password)
-        {
-            // Check if the given email exists in the table for customers
-            if(DoesEmailExist(connection, customerEmail))
-            {
-                // Find the customer id
-                int customerId = Convert.ToInt32(GetCustomerInfo(connection, "id", customerEmail));
+        // public void AddLogin(SqliteConnection connection, string customerEmail, string password)
+        // {
+        //     // Check if the given email exists in the table for customers
+        //     if(DoesEmailExist(connection, customerEmail))
+        //     {
+        //         // Find the customer id
+        //         int customerId = Convert.ToInt32(GetCustomerInfo(connection, "id", customerEmail));
 
-                // Create salt by hashing current dateTime
-                string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
-                // Add salt to password and hash them
-                string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
-                // Adds the log in info to table
-                var insertCmd = connection.CreateCommand();
-                insertCmd.CommandText = 
-                @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
-                VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
-                insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
-                insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
-                insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
-                insertCmd.ExecuteNonQuery();
-            }
-        }
+        //         // Create salt by hashing current dateTime
+        //         string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
+        //         // Add salt to password and hash them
+        //         string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
+        //         // Adds the log in info to table
+        //         var insertCmd = connection.CreateCommand();
+        //         insertCmd.CommandText = 
+        //         @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
+        //         VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
+        //         insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
+        //         insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
+        //         insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
+        //         insertCmd.ExecuteNonQuery();
+        //     }
+        // }
 
         // Checks if the given email and password match in the table
         public bool CheckPassword(SqliteConnection connection, string customerEmail, string password)
