@@ -14,6 +14,11 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 // Tee POSTEIHIN recordi Databaselogicsiin
 // Muuta Databaselogicsiin metodeihin connection niin, että ei ota sitä parametrina, vaan metodin sisällä luo ja open ja close
 
+// Customer
+app.MapPost("/addcustomer", (Asiakas asiakas) => database.AddCustomer(asiakas.name, asiakas.email, asiakas.address, asiakas.phonenumber));
+app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); // http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
+//
+
 app.MapGet("/getproductid/{name}", (string name) => database.GetProductId(name));
 
 app.MapPost("/addproduct", (Tuote tuote) => database.AddProduct(tuote.name, tuote.productCtgory, tuote.productCtgory2, tuote.price, tuote.amount, tuote.img, tuote.description));
