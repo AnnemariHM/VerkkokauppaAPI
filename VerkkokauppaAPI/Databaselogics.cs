@@ -4,8 +4,11 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
-public record Tuote(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
 public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot);
+public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
+public record Asiakas(int id, string name, string email, string address, string phonenumber);
+public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
+
 
     internal class Databaselogics
     {
@@ -110,8 +113,11 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
 
         #region Reviews
         // Inserts new product review
-        public void AddReview(SqliteConnection connection, int productId, int customerId, string review,int numReview)
-        {
+        public void AddReview(int productId, int customerId, string review,int numReview)
+        { 
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = @"INSERT INTO Arvostelut (tuote_id, asiakas_id, arvostelu, numeerinen_arvio)
             VALUES ($tuote_id, $asiakas_id, $arvostelu, $numeerinen_arvio)";
@@ -120,11 +126,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             insertCmd.Parameters.AddWithValue("$arvostelu", review);
             insertCmd.Parameters.AddWithValue("$numeerinen_arvio", numReview);
             insertCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
         // Gets (select) product review (text) by product name
-        public List<string> GetReview(SqliteConnection connection, string productName)
+        public List<string> GetReview(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List <string> returning = new List<string>();
             List<string> noReviews = new List<string>();
 
@@ -146,12 +157,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
                 return noReviews;
             }
 
+            connection.Close();
             return returning;
         }
 
         // Gets (select) numeric product review by product name
-        public List<int> GetNumericReview(SqliteConnection connection, string productName)
+        public List<int> GetNumericReview(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<int> returning = new List<int>();
             List<int> noReviews = new List<int>();
 
@@ -173,12 +188,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
                 return noReviews;
             }
 
+            connection.Close();
             return returning;
         }
 
         //Gets customer's id searched by review
-        public List<int> GetCustomerIdFromReview(SqliteConnection connection, string review)
+        public List<int> GetCustomerIdFromReview(string review)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<int> customerId = new List<int>();
 
             var selectCmd = connection.CreateCommand();
@@ -192,23 +211,32 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
                 customerId.Add(result.GetInt32(0));
             }
 
+            connection.Close();
             return customerId;
         }
 
         // Deletes the review searched by string
-        public void DeleteReview(SqliteConnection connection, string toBeDeleted)
+        public void DeleteReview(string toBeDeleted)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var delCmd = connection.CreateCommand();
             delCmd.CommandText = @"DELETE FROM Arvostelut WHERE arvostelu = $arvostelu";
             delCmd.Parameters.AddWithValue("$arvostelu", toBeDeleted);
             delCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
         #endregion
       
         #region Customers
         // Lisää asiakas tauluun Asiakkaat
-        public void AddCustomer(SqliteConnection connection, string name, string email, string address, string phonenumber)
+        public void AddCustomer(string name, string email, string address, string phonenumber)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+        
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = 
             @"INSERT INTO Asiakkaat (nimi, email, osoite, puhelinnumero)
@@ -218,22 +246,31 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             insertCmd.Parameters.AddWithValue("$address", address);
             insertCmd.Parameters.AddWithValue("$phonenumber", phonenumber);
             insertCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // UPDATE asiakkaan tietoja taulusta Asiakkaat. Valitse parametrillä email kenen tietoja päivitetään, colum mitä tietoja ja newInfo uusi tieto.
-        public void UpdateCustomer(SqliteConnection connection, string column, string newInfo, string email)
+        public void UpdateCustomer(string column, string newInfo, string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             $"UPDATE Asiakkaat SET {column} = $newInfo WHERE email = $email";
             updateCmd.Parameters.AddWithValue("$newInfo", newInfo);
             updateCmd.Parameters.AddWithValue("$email", email);
             updateCmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
         // Hakee tablesta Asiakkaat columnin tiedot siltä, missä email mätsää.
-        public string GetCustomerInfo(SqliteConnection connection, string column, string email)
+        public string GetCustomerInfo(string column, string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string returnResult = "";
 
             var getCmd = connection.CreateCommand();
@@ -245,7 +282,8 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 returnResult = result.GetString(0);
             }
-
+            
+            connection.Close();
             return returnResult;
         }
 
@@ -305,6 +343,37 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             connection.Close();
         }
 
+        // Returns named product's info
+        public Product GetProductInfo(string productName)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            Product product = null;
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText =
+            @"SELECT *
+            FROM Tuotteet
+            WHERE nimi = $nimi";
+            selectCmd.Parameters.AddWithValue("$nimi", productName);
+            var result = selectCmd.ExecuteReader();
+            if (result.Read())
+            {
+                // Create a new Product record and set its values from the database columns
+                product = new Product(
+                    result.GetInt32(0),      // id
+                    result.GetString(1),     // name
+                    result.GetString(2),     // productCtgory
+                    result.GetString(3),     // productCtgory2
+                    result.GetInt32(4),      // price
+                    result.GetInt32(5),      // amount
+                    result.GetString(6),     // img
+                    result.GetString(7)      // description
+                );
+            }
+            connection.Close();
+            return product;
+        }
+
         // Returns named product's id
         public int GetProductId(string productName)
         {
@@ -329,8 +398,11 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
         }
 
         // Returns a list of all the product names in database
-        public List<string> GetAllProductNames(SqliteConnection connection)
+        public List<string> GetAllProductNames()
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             List<string> names = new List<string>();
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -341,12 +413,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 names.Add(result.GetString(0));
             }
+            connection.Close();
             return names;
         }
 
         // Returns named product's category
-        public string GetProductCategory(SqliteConnection connection, string productName)
+        public string GetProductCategory(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string ctgory = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -359,12 +435,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 ctgory = result.GetString(0);
             }
+            connection.Close();
             return ctgory;
         }
 
         // Returns named product's second category
-        public string GetProductCategory2(SqliteConnection connection, string productName)
+        public string GetProductCategory2(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string ctgory = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -377,12 +457,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 ctgory = result.GetString(0);
             }
+            connection.Close();
             return ctgory;        
         }
 
         // Returns named product's price
-        public int GetProductPrice(SqliteConnection connection, string productName)
+        public int GetProductPrice(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             int price = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -395,12 +479,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 price = result.GetInt32(0);
             }
+            connection.Close();
             return price;
         }
 
         // Returns named product's amount
-        public int GetProductAmount(SqliteConnection connection, string productName)
+        public int GetProductAmount(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             int amount = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -413,12 +501,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 amount = result.GetInt32(0);
             }
+            connection.Close();
             return amount;
         }
 
         // Returns named product's img
-        public string GetProductImg(SqliteConnection connection, string productName)
+        public string GetProductImg(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string img = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -431,12 +523,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 img = result.GetString(0);
             }
+            connection.Close();
             return img;
         }
 
         // Returns named product's description
-        public string GetProductDescription(SqliteConnection connection, string productName)
+        public string GetProductDescription(string productName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             string description = "";
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
@@ -449,12 +545,16 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 description = result.GetString(0);
             }
+            connection.Close();
             return description;
         }
 
         // Updates the product's name to the database
-        public void UpdateProductName(SqliteConnection connection, string productName, string newName)
+        public void UpdateProductName(string productName, string newName)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText = 
             @"UPDATE Tuotteet
@@ -463,11 +563,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newName", newName);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's category to the database
-        public void UpdateProductCategory(SqliteConnection connection, string productName, string newCategory)
+        public void UpdateProductCategory(string productName, string newCategory)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -476,11 +580,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newCategory", newCategory);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's second category to the database
-        public void UpdateProductCategory2(SqliteConnection connection, string productName, string newCategory)
+        public void UpdateProductCategory2(string productName, string newCategory)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -489,11 +597,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newCategory", newCategory);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's price to the database
-        public void UpdateProductPrice(SqliteConnection connection, string productName, int newPrice)
+        public void UpdateProductPrice(string productName, int newPrice)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -502,11 +614,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newPrice", newPrice);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's amount to the database
-        public void UpdateProductAmount(SqliteConnection connection, string productName, int newAmount)
+        public void UpdateProductAmount(string productName, int newAmount)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -515,11 +631,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newAmount", newAmount);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's img to the database
-        public void UpdateProductImg(SqliteConnection connection, string productName, string newImg)
+        public void UpdateProductImg(string productName, string newImg)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -528,11 +648,15 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newImg", newImg);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Updates the product's description to the database
-        public void UpdateProductDescription(SqliteConnection connection, string productName, string newDescription)
+        public void UpdateProductDescription(string productName, string newDescription)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var updateCmd = connection.CreateCommand();
             updateCmd.CommandText =
             @"UPDATE Tuotteet 
@@ -541,22 +665,30 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             updateCmd.Parameters.AddWithValue("$newDescription", newDescription);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Deletes a product from the table
-        public void DeleteProduct(SqliteConnection connection, string name)
+        public void DeleteProduct(string name)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             var delCmd = connection.CreateCommand();
             delCmd.CommandText = 
             @"DELETE FROM Tuotteet
             WHERE nimi = $nimi";
             delCmd.Parameters.AddWithValue("$nimi", name);
             delCmd.ExecuteNonQuery();
+            connection.Close();
         }
 
         // Prints all products to console (for testing purposes)
-        public void PrintAllProducts(SqliteConnection connection)
+        public void PrintAllProducts()
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
             Console.WriteLine("Tuotteet:");
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = "SELECT * FROM Tuotteet";
@@ -566,6 +698,7 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
             {
                 Console.WriteLine($"{product["id"]} {product["nimi"]} {product["kategoria"]} {product["kategoria_kaksi"]} {product["hinta"]} {product["kappalemaara"]} {product["kuva"]} {product["kuvaus"]}");
             }
+            connection.Close();
         }
         #endregion
 
@@ -738,29 +871,29 @@ public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimi
         
         #region Logins
         // Adds log in info to the table
-        public void AddLogin(SqliteConnection connection, string customerEmail, string password)
-        {
-            // Check if the given email exists in the table for customers
-            if(DoesEmailExist(connection, customerEmail))
-            {
-                // Find the customer id
-                int customerId = Convert.ToInt32(GetCustomerInfo(connection, "id", customerEmail));
+        // public void AddLogin(SqliteConnection connection, string customerEmail, string password)
+        // {
+        //     // Check if the given email exists in the table for customers
+        //     if(DoesEmailExist(connection, customerEmail))
+        //     {
+        //         // Find the customer id
+        //         int customerId = Convert.ToInt32(GetCustomerInfo(connection, "id", customerEmail));
 
-                // Create salt by hashing current dateTime
-                string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
-                // Add salt to password and hash them
-                string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
-                // Adds the log in info to table
-                var insertCmd = connection.CreateCommand();
-                insertCmd.CommandText = 
-                @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
-                VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
-                insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
-                insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
-                insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
-                insertCmd.ExecuteNonQuery();
-            }
-        }
+        //         // Create salt by hashing current dateTime
+        //         string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
+        //         // Add salt to password and hash them
+        //         string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
+        //         // Adds the log in info to table
+        //         var insertCmd = connection.CreateCommand();
+        //         insertCmd.CommandText = 
+        //         @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
+        //         VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
+        //         insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
+        //         insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
+        //         insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
+        //         insertCmd.ExecuteNonQuery();
+        //     }
+        // }
 
         // Checks if the given email and password match in the table
         public bool CheckPassword(SqliteConnection connection, string customerEmail, string password)
