@@ -24,4 +24,12 @@ app.MapPost("/addcustomer", (Asiakas asiakas) => database.AddCustomer(asiakas.na
 app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); // http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
 //
 
+#region ReviewsMapping
+
+app.MapGet("/getreview/{name}", (string name) => database.GetReview(name));
+
+app.MapPost("/addreview", (AddReview review) => database.AddReview(review.ProductId, review.CustomerId, review.Review, review.NumReview));
+
+#endregion
+
 app.Run();
