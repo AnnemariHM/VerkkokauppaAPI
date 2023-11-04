@@ -28,7 +28,7 @@ app.MapPost("/addcustomer", (Asiakas asiakas) =>
     return Results.Ok(new { message = "Customer added successfully" });
 });
 
-// Get Customer Info - http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
+// Get Customer Info from wanted column by email- http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
 app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); 
 
 // Update Customer Info - http://localhost:{PORT}/updatecustomer/nimi/Anssi%20Peltola/anssipeltola%40hotmail.com %20 = välilyönti %40 = @
@@ -36,22 +36,27 @@ app.MapPut("/updatecustomer/{column}/{newInfo}/{email}", (string column, string 
 
 // Delete Customer - http://localhost:{PORT}/deletecustomer/anssipeltola%40hotmail.com
 app.MapDelete("/deletecustomer/{email}", (string email) => database.DeleteCustomer(email));
+
+// Get Customer By Email - http://localhost:{PORT}/getcustomerbyemail/anssipeltola%40hotmail.com
+app.MapGet("/getcustomerbyemail/{email}", (string email) => database.GetCustomerByEmail(email));
 #endregion
 
 #region TilausriviMapping
 // Add orderline - http://localhost:{PORT}/addorderline - Body JSON: {"tilaus_id": 1, "tuote_id": 1, "maara": 1, "hinta": 1}
-// En saanut vielä testattua, koska Tilaukset table on tyhjä ja tilaus_id on foreign key
 app.MapPost("/addorderline", (Tilasrivi tilausrivi) => 
 {
     database.AddOrderLine(tilausrivi.tilaus_id, tilausrivi.tuote_id, tilausrivi.maara, tilausrivi.hinta);
     return Results.Ok();
 });
 
-// Delete orderline - http://localhost:{PORT}/deleteorderline/1 - Ei testattu!
+// Delete orderline - http://localhost:{PORT}/deleteorderline/1
 app.MapDelete("/deleteorderline/{id}", (int id) => database.DeleteOrderLine(id));
 
-// Get orderline - http://localhost:{PORT}/getorderline/1 - Ei testattu!
+// Get orderline - http://localhost:{PORT}/getorderline/1 
 app.MapGet("/getorderline/{id}", (int id) => database.GetOrderLine(id));
+
+// UPDATE orderline - http://localhost:{PORT}/updateorderline/1/1/1/1/1
+app.MapPut("/updateorderline/{id}/{tilaus_id}/{tuote_id}/{maara}/{hinta}", (int id, int tilaus_id, int tuote_id, int maara, int hinta) => database.UpdateOrderLine(id, tilaus_id, tuote_id, maara, hinta));
 #endregion
 
 #region ReviewsMapping
