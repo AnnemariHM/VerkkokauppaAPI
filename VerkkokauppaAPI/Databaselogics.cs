@@ -301,6 +301,26 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             connection.Close();
         }
 
+        public Dictionary<string, object> GetCustomerByEmail(string email)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = @"SELECT * FROM Asiakkaat WHERE email = $email";
+            selectCmd.Parameters.AddWithValue("$email", email);
+            var reader = selectCmd.ExecuteReader();
+            var dataTable = new DataTable();
+            dataTable.Load(reader);
+
+            connection.Close();
+
+            // Convert datatable to dictionary
+            var result = dataTable.AsEnumerable().Select(row => dataTable.Columns.Cast<DataColumn>().ToDictionary(column => column.ColumnName,column => row[column])).FirstOrDefault();
+
+            return result;
+        }
+
         // Printtaa consoleen tarjolla olevat sarakkeet haluamasta tablesta parametrillä tableName. En halunnut, että se näyttää "id" saraketta joten se skippaa ne!
         public void PrintColumnNames(SqliteConnection connection, string tableName)
         {
@@ -882,7 +902,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             connection.Close();
         }
 
-        public DataTable GetOrderLine(int id)
+        public List<Dictionary<string, object>> GetOrderLine(int id)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -895,37 +915,57 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             dataTable.Load(reader);
 
             connection.Close();
-            return dataTable;
 
+            // Convert datatable to list of dictionaries
+            var result = dataTable.AsEnumerable().Select(row => dataTable.Columns.Cast<DataColumn>().ToDictionary(column => column.ColumnName,column => row[column])).ToList();
+
+            return result;
+        }
+
+        public void UpdateOrderLine(int id, int tilaus_id, int tuote_id, int maara, int hinta)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var updateCmd = connection.CreateCommand();
+            updateCmd.CommandText = @"UPDATE Tilausrivit SET tilaus_id = $tilaus_id, tuote_id = $tuote_id, maara = $maara, hinta = $hinta WHERE id = $id";
+            updateCmd.Parameters.AddWithValue("$id", id);
+            updateCmd.Parameters.AddWithValue("$tilaus_id", tilaus_id);
+            updateCmd.Parameters.AddWithValue("$tuote_id", tuote_id);
+            updateCmd.Parameters.AddWithValue("$maara", maara);
+            updateCmd.Parameters.AddWithValue("$hinta", hinta);
+            updateCmd.ExecuteNonQuery();
+
+            connection.Close(); 
         }
 
         #endregion
         
         #region Logins
         // Adds log in info to the table
-        // public void AddLogin(SqliteConnection connection, string customerEmail, string password)
-        // {
-        //     // Check if the given email exists in the table for customers
-        //     if(DoesEmailExist(connection, customerEmail))
-        //     {
-        //         // Find the customer id
-        //         int customerId = Convert.ToInt32(GetCustomerInfo(connection, "id", customerEmail));
+        public void AddLogin(SqliteConnection connection, string customerEmail, string password)
+        {
+            // Check if the given email exists in the table for customers
+            if(DoesEmailExist(connection, customerEmail))
+            {
+                // Find the customer id
+                int customerId = Convert.ToInt32(GetCustomerInfo("id", customerEmail));
 
-        //         // Create salt by hashing current dateTime
-        //         string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
-        //         // Add salt to password and hash them
-        //         string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
-        //         // Adds the log in info to table
-        //         var insertCmd = connection.CreateCommand();
-        //         insertCmd.CommandText = 
-        //         @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
-        //         VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
-        //         insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
-        //         insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
-        //         insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
-        //         insertCmd.ExecuteNonQuery();
-        //     }
-        // }
+                // Create salt by hashing current dateTime
+                string hashedSalt = Convert.ToString(DateTime.Now.ToString().GetHashCode());
+                // Add salt to password and hash them
+                string hashedPassword = Convert.ToString((password + hashedSalt).GetHashCode());
+                // Adds the log in info to table
+                var insertCmd = connection.CreateCommand();
+                insertCmd.CommandText = 
+                @"INSERT INTO Kirjautumistiedot (asiakas_id, salasana_hash, salasana_salt) 
+                VALUES ($asiakas_id, $salasana_hash, $salasana_salt)";
+                insertCmd.Parameters.AddWithValue("$asiakas_id", customerId);
+                insertCmd.Parameters.AddWithValue("$salasana_hash", hashedPassword);
+                insertCmd.Parameters.AddWithValue("$salasana_salt", hashedSalt);
+                insertCmd.ExecuteNonQuery();
+            }
+        }
 
         // Checks if the given email and password match in the table
         public bool CheckPassword(SqliteConnection connection, string customerEmail, string password)
