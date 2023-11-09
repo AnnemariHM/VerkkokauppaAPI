@@ -42,10 +42,10 @@ app.MapGet("/getcustomerbyemail/{email}", (string email) => database.GetCustomer
 #endregion
 
 #region TilausriviMapping
-// Add orderline - http://localhost:{PORT}/addorderline - Body JSON: {"tilaus_id": 1, "tuote_id": 1, "maara": 1, "hinta": 1}
+// Add orderline - http://localhost:{PORT}/addorderline - Body JSON: {"tilaus_id": 1, "tuote_id": 1, "maara": 1}
 app.MapPost("/addorderline", (Tilasrivi tilausrivi) => 
 {
-    database.AddOrderLine(tilausrivi.tilaus_id, tilausrivi.tuote_id, tilausrivi.maara, tilausrivi.hinta);
+    database.AddOrderLine(tilausrivi.tilaus_id, tilausrivi.tuote_id, tilausrivi.maara);
     return Results.Ok();
 });
 

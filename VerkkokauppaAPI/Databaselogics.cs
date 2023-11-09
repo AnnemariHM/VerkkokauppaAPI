@@ -508,6 +508,27 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             return price;
         }
 
+        public int GetProductPriceById(int productId)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            int price = 0;
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = 
+            @"SELECT hinta
+            FROM Tuotteet
+            WHERE id = $id";
+            selectCmd.Parameters.AddWithValue("$id", productId);
+            var result = selectCmd.ExecuteReader();
+            if (result.Read())
+            {
+                price = result.GetInt32(0);
+            }
+            connection.Close();
+            return price;
+        }
+
         // Returns named product's amount
         public int GetProductAmount(string productName)
         {
@@ -871,7 +892,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
 
         #region Tilausrivit
 
-        public void AddOrderLine(int tilaus_id, int tuote_id, int maara, int hinta)
+        public void AddOrderLine(int tilaus_id, int tuote_id, int maara)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -883,7 +904,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             insertCmd.Parameters.AddWithValue("$tilaus_id", tilaus_id);
             insertCmd.Parameters.AddWithValue("$tuote_id", tuote_id);
             insertCmd.Parameters.AddWithValue("$maara", maara);
-            insertCmd.Parameters.AddWithValue("$hinta", hinta);
+            insertCmd.Parameters.AddWithValue("$hinta", GetProductPriceById(tuote_id) * maara);
             insertCmd.ExecuteNonQuery();
 
             connection.Close(); 
