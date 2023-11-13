@@ -4,22 +4,18 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
-public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot);
-public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
+public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot);
+public record Product(int id, string name, string productCtgory, string productCtgory2, double price, int amount, string img, string description);
 public record Asiakas(int id, string name, string email, string address, string phonenumber);
 public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
-public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hinta);
+public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double hinta);
 
     internal class Databaselogics
     {
         private static string _connectionString = "Data Source = verkkokauppa.db";
         public Databaselogics()
         {
-            // Nää jokaiseen metodiin alkuun ja loppuun:
-            // var connection = new SqliteConnection(_connectionString);
-            // connection.Open();
-            // Write your code here :´D
-            // connection.Close();
+            //
         }
 
         #region CreateTables
@@ -31,16 +27,16 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             // Creates a table for 'Tuotteet' ('kuva' could be BLOB-type, but we are using TEXT for now)
             var crProductTable = connection.CreateCommand();
             crProductTable.CommandText = 
-            @"CREATE TABLE IF NOT EXISTS Tuotteet (
-            id INTEGER PRIMARY KEY,
-            nimi TEXT,
-            kategoria TEXT,
-            kategoria_kaksi TEXT,
-            hinta INTEGER,
-            kappalemaara INTEGER,
-            kuva TEXT, 
-            kuvaus TEXT
-            )";
+                @"CREATE TABLE IF NOT EXISTS Tuotteet (
+                id INTEGER PRIMARY KEY,
+                nimi TEXT NOT NULL UNIQUE,
+                kategoria TEXT,
+                kategoria_kaksi TEXT,
+                hinta REAL,
+                kappalemaara INTEGER,
+                kuva TEXT, 
+                kuvaus TEXT
+                )";
             crProductTable.ExecuteNonQuery();
             
             // Luodaan taulu Asiakkaat
@@ -49,16 +45,24 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
                 @"CREATE TABLE IF NOT EXISTS Asiakkaat (
                 id INTEGER PRIMARY KEY,
                 nimi TEXT NOT NULL,
-                email TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
                 osoite TEXT NOT NULL,
-                puhelinnumero TEXT NOT NULL
+                puhelinnumero TEXT
                 )";
             crtTblAsiakkaat.ExecuteNonQuery();
           
             // Creates table Arvostelut
             var createReviewCmd = connection.CreateCommand();
-            createReviewCmd.CommandText = @"CREATE TABLE IF NOT EXISTS Arvostelut
-            (id INTEGER PRIMARY KEY, tuote_id INTEGER, asiakas_id INTEGER, arvostelu TEXT, numeerinen_arvio INTEGER)";
+            createReviewCmd.CommandText = 
+                @"CREATE TABLE IF NOT EXISTS Arvostelut(
+                id INTEGER PRIMARY KEY, 
+                tuote_id INTEGER NOT NULL, 
+                asiakas_id INTEGER NOT NULL, 
+                arvostelu TEXT, 
+                numeerinen_arvio INTEGER,
+                FOREIGN KEY (tuote_id) REFERENCES Tuotteet(id),
+                FOREIGN KEY (asiakas_id) REFERENCES Asiakkaat(id)
+                )";
             createReviewCmd.ExecuteNonQuery();
 
             // Create table Tilaukset
@@ -66,12 +70,13 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             createTilaukset.CommandText = 
                 @"CREATE TABLE IF NOT EXISTS Tilaukset(
                 id INTEGER PRIMARY KEY,
-                asiakas_id INTEGER,
-                tilauspaiva TEXT,
-                toimitusosoite TEXT,
-                tilauksen_hinta INTEGER,
-                tilauksen_tila TEXT,
-                lisatiedot TEXT
+                asiakas_id INTEGER NOT NULL,
+                tilauspaiva TEXT NOT NULL,
+                toimitusosoite TEXT NOT NULL,
+                tilauksen_hinta REAL NOT NULL,
+                tilauksen_tila TEXT NOT NULL,
+                lisatiedot TEXT,
+                FOREIGN KEY (asiakas_id) REFERENCES Asiakkaat(id)
                 )";
             createTilaukset.ExecuteNonQuery();
 
@@ -80,10 +85,10 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             crtTilausrivit.CommandText = 
                 @"CREATE TABLE IF NOT EXISTS Tilausrivit(
                 id INTEGER PRIMARY KEY,
-                tilaus_id INTEGER,
-                tuote_id INTEGER,
-                maara INTEGER,
-                hinta INTEGER,
+                tilaus_id INTEGER NOT NULL,
+                tuote_id INTEGER NOT NULL,
+                maara INTEGER NOT NULL,
+                hinta REAL NOT NULL,
                 FOREIGN KEY (tilaus_id) REFERENCES Tilaukset(id),
                 FOREIGN KEY (tuote_id) REFERENCES Tuotteet(id)
                 )";
@@ -91,20 +96,26 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
 
             // Creates table Maksut
             var createPaymentsCmd = connection.CreateCommand();
-            createPaymentsCmd.CommandText = @"CREATE TABLE IF NOT EXISTS Maksut
-            (id INTEGER PRIMARY KEY, tilaus_id INTEGER, maksutapa TEXT, summa INTEGER)";
+            createPaymentsCmd.CommandText = 
+                @"CREATE TABLE IF NOT EXISTS Maksut(
+                id INTEGER PRIMARY KEY, 
+                tilaus_id INTEGER NOT NULL, 
+                maksutapa TEXT, 
+                summa REAL,
+                FOREIGN KEY (tilaus_id) REFERENCES Tilaukset(id)
+                )";
             createPaymentsCmd.ExecuteNonQuery();
 
             // Create a table for Logins
             var crLoginTable = connection.CreateCommand();
             crLoginTable.CommandText = 
-            @"CREATE TABLE IF NOT EXISTS Kirjautumistiedot (
-            id INTEGER PRIMARY KEY,
-            asiakas_id INTEGER,
-            salasana_hash TEXT,
-            salasana_salt TEXT,
-            FOREIGN KEY (asiakas_id) REFERENCES Asiakkaat(id)
-            )";
+                @"CREATE TABLE IF NOT EXISTS Kirjautumistiedot (
+                id INTEGER PRIMARY KEY,
+                asiakas_id INTEGER NOT NULL,
+                salasana_hash TEXT NOT NULL,
+                salasana_salt TEXT NOT NULL,
+                FOREIGN KEY (asiakas_id) REFERENCES Asiakkaat(id)
+                )";
             crLoginTable.ExecuteNonQuery();
 
             connection.Close();
@@ -1097,7 +1108,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
         #endregion
 
         #region Maksut
-        public void AddPayment(SqliteConnection connection, int orderId, string paymentMethod, int sum)
+        public void AddPayment(SqliteConnection connection, int orderId, string paymentMethod, double sum)
         {
             var insertCmd = connection.CreateCommand();
             insertCmd.CommandText = @"INSERT INTO Maksut (tilaus_id, maksutapa, summa)
