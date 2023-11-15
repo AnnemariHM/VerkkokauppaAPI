@@ -359,7 +359,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
       
         #region Products
         // Adds a product to the table
-        public void AddProduct(string productName, string productCtgory, string productCtgory2, int productPrice, int productAmount, string productImg, string productDescription)
+        public void AddProduct(string productName, string productCtgory, string productCtgory2, double productPrice, int productAmount, string productImg, string productDescription)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -401,7 +401,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
                     result.GetString(1),     // name
                     result.GetString(2),     // productCtgory
                     result.GetString(3),     // productCtgory2
-                    result.GetInt32(4),      // price
+                    result.GetDouble(4),      // price
                     result.GetInt32(5),      // amount
                     result.GetString(6),     // img
                     result.GetString(7)      // description
@@ -499,12 +499,12 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // Returns named product's price
-        public int GetProductPrice(string productName)
+        public double GetProductPrice(string productName)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
-            int price = 0;
+            double price = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
             @"SELECT hinta
@@ -514,18 +514,18 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             var result = selectCmd.ExecuteReader();
             if (result.Read())
             {
-                price = result.GetInt32(0);
+                price = result.GetDouble(0);
             }
             connection.Close();
             return price;
         }
 
-        public int GetProductPriceById(int productId)
+        public double GetProductPriceById(int productId)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
-            int price = 0;
+            double price = 0;
             var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = 
             @"SELECT hinta
@@ -535,7 +535,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             var result = selectCmd.ExecuteReader();
             if (result.Read())
             {
-                price = result.GetInt32(0);
+                price = result.GetDouble(0);
             }
             connection.Close();
             return price;
@@ -659,7 +659,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // Updates the product's price to the database
-        public void UpdateProductPrice(string productName, int newPrice)
+        public void UpdateProductPrice(string productName, double newPrice)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -742,7 +742,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // Prints all products to console (for testing purposes)
-        public void PrintAllProducts()
+        public void PrintAllProductsFORTESTING()
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -762,7 +762,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
 
         #region Purchase
         // Add purchase to TILAUKSET-table
-        public void AddPurchase(int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot)
+        public void AddPurchase(int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -803,7 +803,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
                         reader.GetInt32(1),
                         reader.GetString(2),
                         reader.GetString(3),
-                        reader.GetDecimal(4),
+                        reader.GetDouble(4),
                         reader.GetString(5),
                         reader.GetString(6),
                         reader.GetString(7)
@@ -815,7 +815,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // Find purchase by customer id
-        public PurchaseId FindPurchaseCustomerId(int findTilaus_tilaajanId)
+        public Purchase FindPurchaseCustomerId(int findTilaus_tilaajanId)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -831,12 +831,12 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             {
                 if(reader.Read())
                 {
-                    return new PurchaseId(
+                    return new Purchase(
                         reader.GetInt32(0),
                         reader.GetInt32(1),
                         reader.GetString(2),
                         reader.GetString(3),
-                        reader.GetDecimal(4),
+                        reader.GetDouble(4),
                         reader.GetString(5),
                         reader.GetString(6),
                         reader.GetString(7)
