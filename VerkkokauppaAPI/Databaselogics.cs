@@ -5,6 +5,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 
 public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, int tilauksen_hinta, string tilauksen_tila, string lisatiedot);
+public record Purchase(int Id, int AsiakasId, string Tilauspaiva, string Toimitusosoite, decimal TilauksenHinta, string TilauksenTila, string Lisatiedot, string AsiakkaanNimi);
+public record PurchaseId(int Id, int AsiakasId, string Tilauspaiva, string Toimitusosoite, decimal TilauksenHinta, string TilauksenTila, string Lisatiedot, string AsiakkaanNimi);
 public record Product(int id, string name, string productCtgory, string productCtgory2, int price, int amount, string img, string description);
 public record Asiakas(int id, string name, string email, string address, string phonenumber);
 public record AddReview(int Id, int ProductId, int CustomerId, string Review,int NumReview);
@@ -770,75 +772,94 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, int hint
             connection.Close();
         }
 
-        // find purchase by purchase id (asiakasnimi, asiakasId, tilauspaiva)
-        public void FindPurchaseId(int findOstos_id)
+        // find purchase by purchase id
+        public Purchase FindPurchaseId(int findOstos_id) 
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-            // hae ostos_id:n perusteella
-            // tilauksen hinta tulee toisesta taulusta??
+            // tilausrivit? // tilauksen hinta tulee toisesta taulusta, laske hinnat yhteen
             var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
             WHERE Tilaukset.id = $findOstos_id";
             selectPurchase.Parameters.AddWithValue("$findOstos_id", findOstos_id );
-            var purchases = selectPurchase.ExecuteReader();
-
-           /* DICTIONARY TMS JOKU HYVÄ PRINTTI TÄHÄN, 
-           TÄMÄ VOIS OLLA PAREMPI
-           var tilaus = new Dictionary<int, Tuple<int, string, string, string, int, string, string>>();
-
-            while(purchases.Read())
+            
+            using (var reader = selectPurchase.ExecuteReader())
             {
-                var id = purchases.GetInt32(0);
-                var asiakas_id = purchases.GetInt32(1);
-                var nimi = purchases.GetString(2);
-                var tilauspaiva = purchases.GetString(3);
-                var toimitusosoite = purchases.GetString(4);
-                var tilauksen_hinta = purchases.GetInt32(5);
-                var tilauksen_tila = purchases.GetString(6);
-                var lisatiedot = purchases.GetString(7);
-
-                var item = Tuple.Create(asiakas_id, nimi, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot);
-                tilaus.Add(id, item);
-              //  tilaus.Add(id, asiakas_id, nimi, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot);
-            } */
-
-             while(purchases.Read())
-             {
-                 Console.WriteLine($"TilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} | Tilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}");
-             }
-
+                if (reader.Read())
+                {
+                    return new Purchase(
+                        reader.GetInt32(0),
+                        reader.GetInt32(1),
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetDecimal(4),
+                        reader.GetString(5),
+                        reader.GetString(6),
+                        reader.GetString(7)
+                    );
+                }
+            }
             connection.Close();
+            return null;
         }
 
-        // SELECT Find purchase by customer id
-        public void FindPurchaseCustomerId(int findTilaus_tilaajanId)
+        // Find purchase by customer id
+        public PurchaseId FindPurchaseCustomerId(int findTilaus_tilaajanId)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-
             // tilauksen hinta tulee toisesta taulusta, SE PUUTTUU ??
+            //joinaa siis myös tilausrivitaulujen yhteishinta
             var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
             WHERE Tilaukset.asiakas_id = $findTilaus_tilaajanId";
             selectPurchase.Parameters.AddWithValue("$findTilaus_tilaajanId", findTilaus_tilaajanId);
-            var purchases = selectPurchase.ExecuteReader();
-
-            while(purchases.Read())
+  
+            using (var reader = selectPurchase.ExecuteReader())
             {
-                Console.WriteLine($"----------------------------\nTilausID: {purchases["id"]} | AsiakasID: {purchases["asiakas_id"]} | Asiakasnimi: {purchases["nimi"]} \nTilauspäivä: {purchases["tilauspaiva"]} | Toimitusosoite: {purchases["toimitusosoite"]} | Tilauksen hinta €: {purchases["tilauksen_hinta"]} | Tilauksen tila: {purchases["tilauksen_tila"]} | Lisätiedot: {purchases["lisatiedot"]}\n----------------------------");
+                if(reader.Read())
+                {
+                    return new PurchaseId(
+                        reader.GetInt32(0),
+                        reader.GetInt32(1),
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetDecimal(4),
+                        reader.GetString(5),
+                        reader.GetString(6),
+                        reader.GetString(7)
+                    );
+                }
+        
             }
-
             connection.Close();
+            return null;
         }
+
+        // SELECT find purchase by customer name (antaako aina vain ensimmäisen?)
+        public void FindPurchase_byCustomerName(string findTilaus_tilaajanNimi)
+        {
+            //tilauksen hinta laske tilausriveistä
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            var selectPurchaseByName =connection.CreateCommand();
+            selectPurchaseByName.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
+            LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
+            WHERE Asiakkaat.nimi = $findTilaus_tilaajanNimi";
+            selectPurchaseByName.Parameters.AddWithValue("$findTilaus_tilaajanNimi", findTilaus_tilaajanNimi);
+
+          //  var purchases = selectPurchaseByName
+            connection.Close();
+        } 
         // select find purchase by order date
         public void FindPurchase_bydate(string findPurchase_bydate)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
+            //laske tilauksen hinta tilausriveistä
             var selectPurchaseD = connection.CreateCommand();
             selectPurchaseD.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
