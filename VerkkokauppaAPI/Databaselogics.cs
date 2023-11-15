@@ -974,7 +974,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             return result;
         }
 
-        public void UpdateOrderLine(int id, int tilaus_id, int tuote_id, int maara, int hinta)
+        public void UpdateOrderLine(int id, int tilaus_id, int tuote_id, int maara, double hinta)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
