@@ -73,22 +73,26 @@ app.MapDelete("/deletereview/{review}", (string review) => database.DeleteReview
 
 #endregion
 
-// Sofian tilaukset - Purchases -mapit
-//AddPurchase
+#region PurchasesMapping
+
+// Add Purchase - http://localhost:{PORT}/addpurchase 
 app.MapPost("/addpurchase", (Tilaukset tilaus) => database.AddPurchase(tilaus.asiakas_id, tilaus.tilauspaiva, tilaus.toimitusosoite, tilaus.tilauksen_hinta, tilaus.tilauksen_tila, tilaus.lisatiedot));
 
-// FindPurchaseId
+// Find Purchase by Id - http://localhost:{PORT}/findpurchaseid/id
 app.MapGet("/findpurchaseid/{id}", (int id) => database.FindPurchaseId(id));
 
-// FindPurchaseCustomerId
-app.MapGet("/findpurchasecustomerid/{id}", (int customer_id) => database.FindPurchaseCustomerId(customer_id));
+// Find Purchase by CustomerId - http://localhost:{PORT}/findpurchasecustomerid/{customer_id}
+app.MapGet("/findpurchasecustomerid/{customer_id}", (int customer_id) => database.FindPurchaseCustomerId(customer_id));
 
-// FindPurchase_bydate
+// Find Purchase by date - http://localhost:{PORT}/findpurchasebydate/{date} - example 03112023
 app.MapGet("/findpurchasebydate/{date}", (string date) => database.FindPurchase_bydate(date));
 
-// DeletePurchaseById
+// Delete Purchase by Id - http://localhost:{PORT}/deletePurchaseById/{id}
+app.MapDelete("/deletePurchaseById/{id}", (int id) => database.DeletePurchaseById(id));
 
-// PrintAllPurchases
-app.MapGet("/printallpurchases", () => database.PrintAllPurchases());
+// Print all purchases - http://localhost:{PORT}/printallpurchases
+//app.MapGet("/printallpurchases", () => database.PrintAllPurchases());
+
+#endregion
 
 app.Run();
