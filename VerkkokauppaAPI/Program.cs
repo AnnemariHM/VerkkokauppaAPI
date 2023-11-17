@@ -23,41 +23,47 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 #endregion
 
 #region CustomerMapping
-// Add Customer - http://localhost:{PORT}/addcustomer - Body JSON: {"name":"Anssi Peltola","email": "anssipeltola@hotmail.com", "address": "Itsenäisyydenkatu 18", "phonenumber": "0400244925"}
+// Add Customer - http://localhost:5198/addcustomer - Body JSON: {"name":"Anssi Peltola","email": "anssipeltola@hotmail.com", "address": "Itsenäisyydenkatu 18", "phonenumber": "0400244925"}
 app.MapPost("/addcustomer", (Asiakas asiakas) => 
 {
     database.AddCustomer(asiakas.name, asiakas.email, asiakas.address, asiakas.phonenumber);
     return Results.Ok(new { message = "Customer added successfully" });
 });
 
-// Get Customer Info from wanted column by email- http://localhost:{PORT}/getcustomerinfo/nimi/anssipeltola@hotmail.com
+// Get Customer Info from wanted column by email- http://localhost:5198/getcustomerinfo/nimi/anssipeltola@hotmail.com
 app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) => database.GetCustomerInfo(column, email)); 
 
-// Update Customer Info - http://localhost:{PORT}/updatecustomer/nimi/Anssi%20Peltola/anssipeltola%40hotmail.com %20 = välilyönti %40 = @
+// Update Customer Info - http://localhost:5198/updatecustomer/nimi/Anssi%20Peltola/anssipeltola%40hotmail.com %20 = välilyönti %40 = @
 app.MapPut("/updatecustomer/{column}/{newInfo}/{email}", (string column, string newInfo, string email) => database.UpdateCustomer(column, newInfo, email));
 
-// Delete Customer - http://localhost:{PORT}/deletecustomer/anssipeltola%40hotmail.com
+// Delete Customer - http://localhost:5198/deletecustomer/anssipeltola%40hotmail.com
 app.MapDelete("/deletecustomer/{email}", (string email) => database.DeleteCustomer(email));
 
-// Get Customer By Email - http://localhost:{PORT}/getcustomerbyemail/anssipeltola%40hotmail.com
+// Get Customer By Email - http://localhost:5198/getcustomerbyemail/anssipeltola%40hotmail.com
 app.MapGet("/getcustomerbyemail/{email}", (string email) => database.GetCustomerByEmail(email));
 #endregion
 
 #region TilausriviMapping
-// Add orderline - http://localhost:{PORT}/addorderline - Body JSON: {"tilaus_id": 1, "tuote_id": 1, "maara": 1}
+// Add orderline - http://localhost:5198/addorderline - Body JSON: {"tilaus_id": 1, "tuote_id": 1, "maara": 1}
 app.MapPost("/addorderline", (Tilasrivi tilausrivi) => 
 {
     database.AddOrderLine(tilausrivi.tilaus_id, tilausrivi.tuote_id, tilausrivi.maara);
     return Results.Ok();
 });
 
-// Delete orderline - http://localhost:{PORT}/deleteorderline/1
+// Delete orderline - http://localhost:5198/deleteorderline/1
 app.MapDelete("/deleteorderline/{id}", (int id) => database.DeleteOrderLine(id));
 
-// Get orderline - http://localhost:{PORT}/getorderline/1 
+// Get orderline - http://localhost:5198/getorderline/1 
 app.MapGet("/getorderline/{id}", (int id) => database.GetOrderLine(id));
 
-// UPDATE orderline - http://localhost:{PORT}/updateorderline/1/1/1/1/1
+// Get orderline by tilaus id - http://localhost:5198/getorderlinebyorderid/1
+app.MapGet("/getorderlinebyorderid/{id}", (int id) => database.GetOrderLineByOrderId(id));
+
+// Get orderline by tuote id - http://localhost:5198/getorderlinebyproductid/1
+app.MapGet("/getorderlinebyproductid/{id}", (int id) => database.GetOrderLineByProductId(id));
+
+// UPDATE orderline - http://localhost:5198/updateorderline/1/1/1/1/1
 app.MapPut("/updateorderline/{id}/{tilaus_id}/{tuote_id}/{maara}/{hinta}", (int id, int tilaus_id, int tuote_id, int maara, int hinta) => database.UpdateOrderLine(id, tilaus_id, tuote_id, maara, hinta));
 #endregion
 
@@ -76,22 +82,22 @@ app.MapDelete("/deletereview/{review}", (string review) => database.DeleteReview
 
 #region PurchasesMapping
 
-// Add Purchase - http://localhost:{PORT}/addpurchase 
+// Add Purchase - http://localhost:5198/addpurchase 
 app.MapPost("/addpurchase", (Tilaukset tilaus) => database.AddPurchase(tilaus.asiakas_id, tilaus.tilauspaiva, tilaus.toimitusosoite, tilaus.tilauksen_hinta, tilaus.tilauksen_tila, tilaus.lisatiedot));
 
-// Find Purchase by Id - http://localhost:{PORT}/findpurchaseid/id
+// Find Purchase by Id - http://localhost:5198/findpurchaseid/id
 app.MapGet("/findpurchaseid/{id}", (int id) => database.FindPurchaseId(id));
 
-// Find Purchase by CustomerId - http://localhost:{PORT}/findpurchasecustomerid/{customer_id}
+// Find Purchase by CustomerId - http://localhost:5198/findpurchasecustomerid/{customer_id}
 app.MapGet("/findpurchasecustomerid/{customer_id}", (int customer_id) => database.FindPurchaseCustomerId(customer_id));
 
-// Find Purchase by date - http://localhost:{PORT}/findpurchasebydate/{date} - example 03112023
+// Find Purchase by date - http://localhost:5198/findpurchasebydate/{date} - example 03112023
 app.MapGet("/findpurchasebydate/{date}", (string date) => database.FindPurchase_bydate(date));
 
-// Delete Purchase by Id - http://localhost:{PORT}/deletePurchaseById/{id}
+// Delete Purchase by Id - http://localhost:5198/deletePurchaseById/{id}
 app.MapDelete("/deletePurchaseById/{id}", (int id) => database.DeletePurchaseById(id));
 
-// Print all purchases - http://localhost:{PORT}/printallpurchases
+// Print all purchases - http://localhost:5198/printallpurchases
 //app.MapGet("/printallpurchases", () => database.PrintAllPurchases());
 
 #endregion
