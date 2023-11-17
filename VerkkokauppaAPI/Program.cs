@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 var database = new Databaselogics();
+database.CreateTables();
 
 app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 
