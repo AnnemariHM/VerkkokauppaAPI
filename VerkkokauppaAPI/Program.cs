@@ -16,10 +16,11 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
 
 #region ProductMapping
     app.MapPost("/addproduct", (Product product) => database.AddProduct(product.name, product.productCtgory, product.productCtgory2, product.price, product.amount, product.img, product.description));
-    app.MapGet("/getproductinfo/{name}", (string name) => database.GetProductInfo(name));
-    app.MapGet("/getproductid/{name}", (string name) => database.GetProductId(name));
+    app.MapGet("/getproductinfo/{productName}", (string productName) => database.GetProductInfo(productName));
+    app.MapGet("/getproductid/{productName}", (string productName) => database.GetProductId(productName));
     app.MapGet("/getallproductnames", () => database.GetAllProductNames());
-    app.MapPut("updateproductimg/{name}/{img}", (string name, string img) => database.UpdateProductImg(name, img));
+    app.MapPut("updateproductimg/{productName}/{newImg}", (string productName, string newImg) => database.UpdateProductImg(productName, newImg));
+    app.MapPut("updateproductamountbyid/{productId}/{newAmount}", (int productId, int newAmount) => database.UpdateProductAmountById(productId, newAmount));
 #endregion
 
 #region CustomerMapping
