@@ -675,7 +675,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             connection.Close();
         }
 
-        // Updates the product's amount to the database
+        // Updates the named product's amount to the database
         public void UpdateProductAmount(string productName, int newAmount)
         {
             var connection = new SqliteConnection(_connectionString);
@@ -688,6 +688,23 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             WHERE nimi = $productName";
             updateCmd.Parameters.AddWithValue("$newAmount", newAmount);
             updateCmd.Parameters.AddWithValue("$productName", productName);
+            updateCmd.ExecuteNonQuery();
+            connection.Close();
+        }
+
+        // Updates the product's amount by id to the database
+        public void UpdateProductAmountById(int productId, int newAmount)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var updateCmd = connection.CreateCommand();
+            updateCmd.CommandText =
+            @"UPDATE Tuotteet 
+            SET kappalemaara = $newAmount
+            WHERE id = $productId";
+            updateCmd.Parameters.AddWithValue("$newAmount", newAmount);
+            updateCmd.Parameters.AddWithValue("$productId", productId);
             updateCmd.ExecuteNonQuery();
             connection.Close();
         }
