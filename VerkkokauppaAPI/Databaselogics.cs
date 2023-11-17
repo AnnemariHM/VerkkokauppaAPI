@@ -974,6 +974,46 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             return result;
         }
 
+        public List<Dictionary<string, object>> GetOrderLineByOrderId(int id)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = @"SELECT * FROM Tilausrivit WHERE tilaus_id = $id";
+            selectCmd.Parameters.AddWithValue("$id", id);
+            var reader = selectCmd.ExecuteReader();
+            var dataTable = new DataTable();
+            dataTable.Load(reader);
+
+            connection.Close();
+
+            // Convert datatable to list of dictionaries
+            var result = dataTable.AsEnumerable().Select(row => dataTable.Columns.Cast<DataColumn>().ToDictionary(column => column.ColumnName,column => row[column])).ToList();
+
+            return result;
+        }
+
+        public List<Dictionary<string, object>> GetOrderLineByProductId(int id)
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = @"SELECT * FROM Tilausrivit WHERE tuote_id = $id";
+            selectCmd.Parameters.AddWithValue("$id", id);
+            var reader = selectCmd.ExecuteReader();
+            var dataTable = new DataTable();
+            dataTable.Load(reader);
+
+            connection.Close();
+
+            // Convert datatable to list of dictionaries
+            var result = dataTable.AsEnumerable().Select(row => dataTable.Columns.Cast<DataColumn>().ToDictionary(column => column.ColumnName,column => row[column])).ToList();
+
+            return result;
+        }
+
         public void UpdateOrderLine(int id, int tilaus_id, int tuote_id, int maara, double hinta)
         {
             var connection = new SqliteConnection(_connectionString);
