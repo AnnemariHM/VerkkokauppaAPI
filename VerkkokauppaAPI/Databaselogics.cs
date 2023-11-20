@@ -779,10 +779,14 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
 
         #region Purchase
         // Add purchase to TILAUKSET-table
-        public void AddPurchase(int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot)
+        public void AddPurchase(int asiakas_id, string toimitusosoite, double tilauksen_hinta, string lisatiedot)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
+
+            string tilauspaiva = DateTime.Now.ToString("ddMMyyyy");
+            string tilauksen_tila = "Tilaus vastaanotettu";
+         // double tilauksen_hinta = 
 
             var insertCmd2 = connection.CreateCommand();
             insertCmd2.CommandText = @"INSERT INTO Tilaukset (
@@ -816,14 +820,14 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
                 if (reader.Read())
                 {
                     return new Purchase(
-                        reader.GetInt32(0),
-                        reader.GetInt32(1),
-                        reader.GetString(2),
-                        reader.GetString(3),
-                        reader.GetDouble(4),
-                        reader.GetString(5),
-                        reader.GetString(6),
-                        reader.GetString(7)
+                        reader.GetInt32(0), //id
+                        reader.GetInt32(1), //asiakasid
+                        reader.GetString(2), //päivä
+                        reader.GetString(3), //osoite
+                        reader.GetDouble(4), //hinta
+                        reader.GetString(5), // tila
+                        reader.GetString(6), //lisatiedot
+                        reader.GetString(7)  //nimi
                     );
                 }
             }
