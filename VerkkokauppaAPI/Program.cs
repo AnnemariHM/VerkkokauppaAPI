@@ -1,9 +1,31 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 // JOS HERJAA NIIN RUNNAA: dotnet add package Microsoft.Data.Sqlite
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Cross-Origin Resource Sharing (CORS) services to the application's service collection
+builder.Services.AddCors(options =>
+{
+    // Define a new CORS policy
+    options.AddPolicy("AllowLocalhost5020",
+        builder =>
+        {
+            // Set the allowed origin for this policy to "http://localhost:5020"
+            builder.WithOrigins("http://localhost:5020")
+                   // Allow any header in the request
+                   .AllowAnyHeader()
+                   // Allow any HTTP method in the request
+                   .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
+
+// Apply the CORS policy named "AllowLocalhost5020" to the application. 
+// This will allow the application to accept cross-origin requests from "http://localhost:5020".
+app.UseCors("AllowLocalhost5020");
 
 var database = new Databaselogics();
 database.CreateTables();
@@ -32,6 +54,11 @@ app.MapGet("/", () => "Tervetuloa verkkokauppaan!");
     app.MapGet("/getallproductnames", () => database.GetAllProductNames());
     app.MapPut("/updateproductimg/{productName}/{newImg}", (string productName, string newImg) => database.UpdateProductImg(productName, newImg));
     app.MapPut("/updateproductamountbyid/{productId}/{newAmount}", (int productId, int newAmount) => database.UpdateProductAmountById(productId, newAmount));
+    app.MapPut("/updateproduct/{productName}", (string productName, JsonDocument updatesJson) =>
+    {
+        var updates = updatesJson.RootElement.EnumerateObject().ToDictionary(e => e.Name, e => e.Value);
+        database.UpdateProduct(productName, updates);
+    });
 #endregion
 
 #region CustomerMapping
