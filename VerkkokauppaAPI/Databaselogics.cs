@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
+using System.Text.Json;
 
 public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot);
 public record Product(int id, string name, string productCtgory, string productCtgory2, double price, int amount, string img, string description);
@@ -740,6 +741,52 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             updateCmd.Parameters.AddWithValue("$newDescription", newDescription);
             updateCmd.Parameters.AddWithValue("$productName", productName);
             updateCmd.ExecuteNonQuery();
+            connection.Close();
+        }
+
+        // Method to update product details in the database
+        public void UpdateProduct(string productName, Dictionary<string, JsonElement> updates)
+        {
+            // Establish a new connection to the database
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            // Create a new SQL command
+            var updateCmd = connection.CreateCommand();
+
+            // Construct the SET clause of the UPDATE statement from the updates dictionary
+            string setClause = string.Join(", ", updates.Select(kv => $"{kv.Key} = @{kv.Key}"));
+            // Set the command text to the UPDATE statement
+            updateCmd.CommandText = $"UPDATE Tuotteet SET {setClause} WHERE nimi = @productName";
+
+            // Loop through each update in the updates dictionary
+            foreach (var update in updates)
+            {
+                var parameterName = update.Key;
+                var parameterValue = update.Value;
+
+                // Check the type of the JsonElement and convert it to the appropriate type
+                if (parameterValue.ValueKind == JsonValueKind.Number && parameterValue.TryGetDecimal(out var decimalValue))
+                {
+                    // If the JsonElement is a number, add it as a decimal parameter to the command
+                    updateCmd.Parameters.AddWithValue($"@{parameterName}", decimalValue);
+                }
+                else if (parameterValue.ValueKind == JsonValueKind.String)
+                {
+                    // If the JsonElement is a string, add it as a string parameter to the command
+                    var stringValue = parameterValue.GetString();
+                    updateCmd.Parameters.AddWithValue($"@{parameterName}", stringValue);
+                }
+                // Add more cases for other types as needed
+            }
+
+            // Add the product name as a parameter to the command
+            updateCmd.Parameters.AddWithValue("@productName", productName);
+
+            // Execute the command
+            updateCmd.ExecuteNonQuery();
+
+            // Close the connection to the database
             connection.Close();
         }
 
