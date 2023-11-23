@@ -75,8 +75,8 @@ app.MapGet("/getcustomerinfo/{column}/{email}", (string column, string email) =>
 // Update Customer Info - http://localhost:5198/updatecustomer/nimi/Anssi%20Peltola/anssipeltola%40hotmail.com %20 = välilyönti %40 = @
 app.MapPut("/updatecustomer/{column}/{newInfo}/{email}", (string column, string newInfo, string email) => database.UpdateCustomer(column, newInfo, email));
 
-// Delete Customer - http://localhost:5198/deletecustomer/anssipeltola%40hotmail.com
-app.MapDelete("/deletecustomer/{email}", (string email) => database.DeleteCustomer(email));
+// Delete Customer (Nulls all columns but leaves ID primary key as it were) - http://localhost:5198/deletecustomer/anssipeltola%40hotmail.com
+app.MapPut("/deletecustomer/{email}", (string email) => database.DeleteCustomer(email));
 
 // Get Customer By Email - http://localhost:5198/getcustomerbyemail/anssipeltola%40hotmail.com
 app.MapGet("/getcustomerbyemail/{email}", (string email) => database.GetCustomerByEmail(email));
