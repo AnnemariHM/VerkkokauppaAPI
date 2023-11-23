@@ -303,15 +303,17 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         // Poistaa tablesta Asiakkaat asiakkaan tiedot emailin perusteella
         public void DeleteCustomer(string email)
         {
-            var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
 
-            var deleteCmd = connection.CreateCommand();
-            deleteCmd.CommandText = @"DELETE FROM Asiakkaat WHERE email = $email";
-            deleteCmd.Parameters.AddWithValue("$email", email);
-            deleteCmd.ExecuteNonQuery();
-            
-            connection.Close();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"UPDATE Asiakkaat SET nimi = '-', email = '-', osoite = '-', puhelinnumero = '-' WHERE email = $email";
+                    cmd.Parameters.AddWithValue("$email", email);
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         public Dictionary<string, object> GetCustomerByEmail(string email)
