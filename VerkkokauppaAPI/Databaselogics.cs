@@ -4,6 +4,8 @@ using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualBasic;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot);
 public record Product(int id, string name, string productCtgory, string productCtgory2, double price, int amount, string img, string description);
@@ -827,29 +829,30 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         #endregion
 
         #region Purchase
-        // Add purchase to TILAUKSET-table
-        public void AddPurchase(int asiakas_id, string toimitusosoite, double tilauksen_hinta, string lisatiedot)
+        // Add purchase to TILAUKSET-table and returns the id of the new purchase
+        public int AddPurchase(int asiakas_id, string toimitusosoite, double tilauksen_hinta, string lisatiedot)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
             string tilauspaiva = DateTime.Now.ToString("ddMMyyyy");
-            string tilauksen_tila = "Tilaus vastaanotettu";
-         // double tilauksen_hinta = 
+            string tilauksen_tila = "Tilaus vastaanotettu"; 
 
             var insertCmd2 = connection.CreateCommand();
-            insertCmd2.CommandText = @"INSERT INTO Tilaukset (
-            asiakas_id, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot) 
-            VALUES ($asiakas_id, $tilauspaiva, $toimitusosoite, $tilauksen_hinta, $tilauksen_tila, $lisatiedot)";
+            insertCmd2.CommandText = 
+            @"INSERT INTO Tilaukset (asiakas_id, tilauspaiva, toimitusosoite, tilauksen_hinta, tilauksen_tila, lisatiedot) 
+            VALUES ($asiakas_id, $tilauspaiva, $toimitusosoite, $tilauksen_hinta, $tilauksen_tila, $lisatiedot)
+            RETURNING id";
             insertCmd2.Parameters.AddWithValue($"asiakas_id", asiakas_id);
             insertCmd2.Parameters.AddWithValue($"tilauspaiva", tilauspaiva);
             insertCmd2.Parameters.AddWithValue($"toimitusosoite", toimitusosoite);
             insertCmd2.Parameters.AddWithValue($"tilauksen_hinta", tilauksen_hinta);
             insertCmd2.Parameters.AddWithValue($"tilauksen_tila", tilauksen_tila);
             insertCmd2.Parameters.AddWithValue($"lisatiedot", lisatiedot);
-            insertCmd2.ExecuteNonQuery();
+            var newRecordId = Convert.ToInt32(insertCmd2.ExecuteScalar());
 
             connection.Close();
+            return newRecordId;
         }
 
         // find purchase by purchase id
