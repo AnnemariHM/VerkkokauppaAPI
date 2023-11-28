@@ -80,6 +80,8 @@ app.MapPut("/deletecustomer/{email}", (string email) => database.DeleteCustomer(
 
 // Get Customer By Email - http://localhost:5198/getcustomerbyemail/anssipeltola%40hotmail.com
 app.MapGet("/getcustomerbyemail/{email}", (string email) => database.GetCustomerByEmail(email));
+
+app.MapGet("/customerexist/{email}", (string email) => database.DoesEmailExist(email));
 #endregion
 
 #region TilausriviMapping
