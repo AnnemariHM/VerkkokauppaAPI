@@ -6,6 +6,8 @@ using Microsoft.VisualBasic;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net;
+using System.Globalization;
 
 public record Tilaukset(int id, int asiakas_id, string tilauspaiva, string toimitusosoite, double tilauksen_hinta, string tilauksen_tila, string lisatiedot);
 public record Product(int id, string name, string productCtgory, string productCtgory2, double price, int amount, string img, string description);
@@ -267,6 +269,15 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         // UPDATE asiakkaan tietoja taulusta Asiakkaat. Valitse parametrillä email kenen tietoja päivitetään, colum mitä tietoja ja newInfo uusi tieto.
         public void UpdateCustomer(string column, string newInfo, string email)
         {
+            // List of valid column names
+            var validColumns = new List<string> { "nimi", "email", "osoite", "puhelinnumero" };
+
+            // Check if the column is valid
+            if (!validColumns.Contains(column))
+            {
+                throw new ArgumentException("Invalid column name");
+            }
+
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
@@ -318,14 +329,25 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             }
         }
 
-        public Dictionary<string, object> GetCustomerByEmail(string email)
+        [HttpGet("getcustomerbyemail")]
+        public Dictionary<string, object> GetCustomerByEmail([FromQuery] string email)
         {
+            // Console.WriteLine(email); // Debug line
+
+            email = WebUtility.UrlDecode(email);
+
+            // Convert Punycode back to original email
+            var emailParts = email.Split('@');
+            var domain = new IdnMapping().GetUnicode(emailParts[1]);
+            email = $"{emailParts[0]}@{domain}";
+
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
             var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = @"SELECT * FROM Asiakkaat WHERE email = $email";
-            selectCmd.Parameters.AddWithValue("$email", email);
+            selectCmd.CommandText = @"SELECT * FROM Asiakkaat WHERE email = @email";
+            selectCmd.Parameters.AddWithValue("@email", email);
+
             var reader = selectCmd.ExecuteReader();
             var dataTable = new DataTable();
             dataTable.Load(reader);
@@ -337,7 +359,6 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
 
             return result;
         }
-
         // Printtaa consoleen tarjolla olevat sarakkeet haluamasta tablesta parametrillä tableName. En halunnut, että se näyttää "id" saraketta joten se skippaa ne!
         public void PrintColumnNames(SqliteConnection connection, string tableName)
         {
