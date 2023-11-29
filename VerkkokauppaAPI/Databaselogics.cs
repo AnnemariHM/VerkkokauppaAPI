@@ -1111,7 +1111,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         public void AddLogin(SqliteConnection connection, string customerEmail, string password)
         {
             // Check if the given email exists in the table for customers
-            if(DoesEmailExist(connection, customerEmail))
+            if(DoesEmailExist(customerEmail))
             {
                 // Find the customer id
                 int customerId = Convert.ToInt32(GetCustomerInfo("id", customerEmail));
@@ -1136,7 +1136,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         public bool CheckPassword(SqliteConnection connection, string customerEmail, string password)
         {
             // Check if the given email exists in the table for customers
-            if (DoesEmailExist(connection, customerEmail))
+            if (DoesEmailExist(customerEmail))
             {
                 // Finds the salt used by email
                 string salt = "";
@@ -1204,8 +1204,10 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
 
         #region UsefulFunctions
 
-        public bool DoesEmailExist(SqliteConnection connection, string email)
+        public bool DoesEmailExist(string email)
         {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
             var cmd = connection.CreateCommand();
             // Laskee monta emailia mätsää parametrin emailiin Tablesta 'Asiakkaat'
             cmd.CommandText = "SELECT COUNT(*) FROM Asiakkaat WHERE email = $email";
@@ -1218,6 +1220,7 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             var count = (long)cmd.ExecuteScalar();
 
             // Tarkista sähköpostin olemassaolon tarkistaminen, onko määrä suurempi kuin 0
+            connection.Close();
             return count > 0;
         }
 
