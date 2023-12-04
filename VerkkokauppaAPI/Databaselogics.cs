@@ -856,12 +856,12 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // find purchase by purchase id
-        public Purchase FindPurchaseId(int findOstos_id) 
+        public Purchase GetPurchaseId(int findOstos_id) 
         {
-            var connection = new SqliteConnection(_connectionString);
+             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-            // tilausrivit? // tilauksen hinta tulee toisesta taulusta, laske hinnat yhteen
-            var selectPurchase = connection.CreateCommand();
+
+           var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
             WHERE Tilaukset.id = $findOstos_id";
@@ -888,12 +888,11 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
         }
 
         // Find purchase by customer id
-        public Purchase FindPurchaseCustomerId(int findTilaus_tilaajanId)
+        public Purchase GetPurchaseCustomerId(int findTilaus_tilaajanId)
         {
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
-            // tilauksen hinta tulee toisesta taulusta, SE PUUTTUU ??
-            //joinaa siis myös tilausrivitaulujen yhteishinta
+
             var selectPurchase = connection.CreateCommand();
             selectPurchase.CommandText = @"SELECT Tilaukset.id, Tilaukset.asiakas_id, Tilaukset.tilauspaiva, Tilaukset.toimitusosoite, Tilaukset.tilauksen_hinta, Tilaukset.tilauksen_tila, Tilaukset.lisatiedot, Asiakkaat.nimi FROM Tilaukset
             LEFT JOIN Asiakkaat ON Tilaukset.asiakas_id = Asiakkaat.id
@@ -921,10 +920,9 @@ public record Tilasrivi(int id, int tilaus_id, int tuote_id, int maara, double h
             return null;
         }
 
-        // SELECT find purchase by customer name (antaako aina vain ensimmäisen?)
+        // SELECT find purchase by customer name (antaa aina vain ensimmäisen?)
         public void FindPurchase_byCustomerName(string findTilaus_tilaajanNimi)
         {
-            //tilauksen hinta laske tilausriveistä
             var connection = new SqliteConnection(_connectionString);
             connection.Open();
             var selectPurchaseByName =connection.CreateCommand();
